@@ -48,6 +48,7 @@ import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.clickable
@@ -138,6 +139,9 @@ object BackgroundManager {
             val file = File(context.filesDir, BACKGROUND_FILE_NAME)
             if (file.exists()) {
                 return BitmapFactory.decodeFile(file.absolutePath)
+            } else {
+                // 使用默认背景图片
+                return BitmapFactory.decodeResource(context.resources, R.drawable.background_image)
             }
         } catch (e: Exception) {
             e.printStackTrace()
@@ -807,7 +811,7 @@ fun CalendarApp() {
     // 颜色设置
     val backgroundColor = if (isDarkMode.value) Color.Black else MaterialTheme.colorScheme.background
     val textColor = if (isDarkMode.value) Color.White else MaterialTheme.colorScheme.onBackground
-    val surfaceColor = if (isDarkMode.value) Color.DarkGray else MaterialTheme.colorScheme.surface
+    val surfaceColor = if (isDarkMode.value) Color.DarkGray else Color(0xFFF5F5DC) // 淡米色,试试,比白色好看desuwa
     val primaryColor = if (isDarkMode.value) Color.Blue else MaterialTheme.colorScheme.primary
 
     // 保存的任务数据
@@ -951,7 +955,8 @@ fun CalendarApp() {
                     colors = ButtonDefaults.buttonColors(
                         containerColor = surfaceColor,
                         contentColor = textColor
-                    )) {
+                    ),
+                    modifier = Modifier.graphicsLayer(alpha = 0.7f)) {
                         Text("<", color = textColor)
                     }
                     Text(
@@ -966,7 +971,8 @@ fun CalendarApp() {
                     colors = ButtonDefaults.buttonColors(
                         containerColor = surfaceColor,
                         contentColor = textColor
-                    )) {
+                    ),
+                    modifier = Modifier.graphicsLayer(alpha = 0.7f)) {
                         Text(">", color = textColor)
                     }
                 }
@@ -980,7 +986,8 @@ fun CalendarApp() {
                     colors = ButtonDefaults.buttonColors(
                         containerColor = surfaceColor,
                         contentColor = textColor
-                    )) {
+                    ),
+                    modifier = Modifier.graphicsLayer(alpha = 0.7f)) {
                         Text("<", color = textColor)
                     }
                     Text(
@@ -995,7 +1002,8 @@ fun CalendarApp() {
                     colors = ButtonDefaults.buttonColors(
                         containerColor = surfaceColor,
                         contentColor = textColor
-                    )) {
+                    ),
+                    modifier = Modifier.graphicsLayer(alpha = 0.7f)) {
                         Text(">", color = textColor)
                     }
                 }
@@ -1005,7 +1013,8 @@ fun CalendarApp() {
                 colors = ButtonDefaults.buttonColors(
                     containerColor = surfaceColor,
                     contentColor = textColor
-                )) {
+                ),
+                modifier = Modifier.graphicsLayer(alpha = 0.7f)) {
                     Text("放假安排", color = textColor)
                 }
 
@@ -1014,7 +1023,8 @@ fun CalendarApp() {
                 colors = ButtonDefaults.buttonColors(
                     containerColor = surfaceColor,
                     contentColor = textColor
-                )) {
+                ),
+                modifier = Modifier.graphicsLayer(alpha = 0.7f)) {
                     Text("起始日", color = textColor)
                 }
 
@@ -1027,7 +1037,8 @@ fun CalendarApp() {
                 colors = ButtonDefaults.buttonColors(
                     containerColor = surfaceColor,
                     contentColor = textColor
-                )) {
+                ),
+                modifier = Modifier.graphicsLayer(alpha = 0.7f)) {
                     Text("返回今天", color = textColor)
                 }
             }
@@ -1295,6 +1306,12 @@ fun CalendarApp() {
                             if (!it) {
                                 backgroundImage.value = null
                                 BackgroundManager.clearBackground(context)
+                            } else {
+                                // 重新加载保存的背景图片
+                                val bitmap = BackgroundManager.loadBackground(context)
+                                if (bitmap != null) {
+                                    backgroundImage.value = bitmap.asImageBitmap()
+                                }
                             }
                         },
                         modifier = Modifier.padding(start = 16.dp)
