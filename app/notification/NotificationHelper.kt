@@ -28,6 +28,8 @@ class NotificationHelper(private val context: Context) {
                 NotificationManager.IMPORTANCE_DEFAULT
             ).apply {
                 description = CHANNEL_DESCRIPTION
+                enableVibration(true) // 启用震动
+                vibrationPattern = longArrayOf(0, 2000, 500, 2000, 500, 2000, 500, 2000, 500, 2000) // 震动模式：10秒
             }
             notificationManager.createNotificationChannel(channel)
         }
@@ -39,6 +41,8 @@ class NotificationHelper(private val context: Context) {
             .setContentTitle(title)
             .setContentText(message)
             .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+            .setDefaults(NotificationCompat.DEFAULT_VIBRATE) // 添加震动
+            .setVibrate(longArrayOf(0, 2000, 500, 2000, 500, 2000, 500, 2000, 500, 2000)) // 震动模式：10秒
             .build()
 
         notificationManager.notify(notificationId, notification)
