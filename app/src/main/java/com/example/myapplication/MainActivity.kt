@@ -462,7 +462,7 @@ fun CalendarApp(viewModel: CalendarViewModel) {
                         PriorityLevel.HIGH -> 0
                         PriorityLevel.MEDIUM -> 1
                         PriorityLevel.LOW -> 2
-                        else -> 3
+                        else -> 2
                     }
                 }
 
@@ -471,21 +471,17 @@ fun CalendarApp(viewModel: CalendarViewModel) {
                         .fillMaxWidth()
                         .padding(16.dp)
                         .verticalScroll(rememberScrollState())
-                        .heightIn(min = 100.dp) // 确保最小高度
                 ) {
                     Text(
                         text = "今日任务",
                         style = MaterialTheme.typography.headlineSmall,
-                        color = textColor,
-                        modifier = Modifier.padding(bottom = 12.dp)
+                        color = textColor
                     )
                     if (sortedTasks.isEmpty()) {
                         Text(
                             text = "暂无任务",
                             style = MaterialTheme.typography.bodyMedium,
-                            modifier = Modifier
-                                .padding(top = 16.dp)
-                                .height(80.dp), // 确保空状态有足够高度
+                            modifier = Modifier.padding(top = 8.dp),
                             color = textColor
                         )
                     } else {
@@ -493,8 +489,7 @@ fun CalendarApp(viewModel: CalendarViewModel) {
                             Card(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .padding(top = 8.dp)
-                                    .heightIn(min = 80.dp), // 确保任务卡片有足够高度
+                                    .padding(top = 8.dp),
                                 colors = CardDefaults.cardColors(
                                     containerColor = surfaceColor
                                 ),
@@ -505,7 +500,7 @@ fun CalendarApp(viewModel: CalendarViewModel) {
                                 Column(
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .padding(16.dp) // 增加内边距
+                                        .padding(12.dp)
                                 ) {
                                     Row(
                                         modifier = Modifier.fillMaxWidth(),
@@ -516,9 +511,7 @@ fun CalendarApp(viewModel: CalendarViewModel) {
                                             text = "${task.hour}:${task.minute.toString().padStart(2, '0')} ${task.title}",
                                             style = MaterialTheme.typography.bodyMedium,
                                             color = textColor,
-                                            modifier = Modifier
-                                                .weight(1f)
-                                                .padding(end = 8.dp)
+                                            modifier = Modifier.weight(1f)
                                         )
                                         Text(
                                             text = when (task.priority) {
@@ -534,7 +527,7 @@ fun CalendarApp(viewModel: CalendarViewModel) {
                                                 PriorityLevel.LOW -> Color.Green
                                                 else -> Color.Green
                                             },
-                                            modifier = Modifier.padding(end = 12.dp)
+                                            modifier = Modifier.padding(end = 8.dp)
                                         )
                                         Button(
                                             onClick = {
@@ -550,15 +543,40 @@ fun CalendarApp(viewModel: CalendarViewModel) {
                                             ),
                                             modifier = Modifier.size(36.dp)
                                         ) {
+                                            Text("×", fontSize = MaterialTheme.typography.headlineSmall.fontSize)
                                         }
                                     }
-                                    if (task.reminderEnabled) {
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
                                         Text(
-                                            text = "提前 ${task.reminderMinutes} 分钟提醒",
+                                            text = "标签: ${task.tag}",
                                             style = MaterialTheme.typography.bodySmall,
                                             color = textColor,
                                             modifier = Modifier.padding(top = 4.dp)
                                         )
+                                        Row(
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            if (task.deadline) {
+                                                Text(
+                                                    text = "紧急",
+                                                    style = MaterialTheme.typography.bodySmall,
+                                                    color = Color.Red,
+                                                    modifier = Modifier.padding(4.dp)
+                                                )
+                                            }
+                                            if (task.reminderEnabled) {
+                                                Text(
+                                                    text = "提前 ${task.reminderMinutes} 分钟提醒",
+                                                    style = MaterialTheme.typography.bodySmall,
+                                                    color = textColor,
+                                                    modifier = Modifier.padding(4.dp)
+                                                )
+                                            }
+                                        }
                                     }
                                 }
                             }
@@ -1242,11 +1260,11 @@ fun ScheduleEditor(
                             onClick = { selectedTag.value = tag },
                             modifier = Modifier.padding(2.dp), // 缩小间距
                             colors = ButtonDefaults.buttonColors(
-                                containerColor = surfaceColor,
-                                contentColor = textColor
+                                containerColor = if (selectedTag.value == tag) (if (isDarkMode) Color(0xFF1976D2) else MaterialTheme.colorScheme.primary) else surfaceColor,
+                                contentColor = if (selectedTag.value == tag) Color.White else textColor
                             )
                         ) {
-                            Text(tag, color = textColor)
+                            Text(tag, color = if (selectedTag.value == tag) Color.White else textColor)
                         }
                     }
                 }

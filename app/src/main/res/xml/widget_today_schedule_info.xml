@@ -3,10 +3,7 @@
     android:minWidth="180dp"
     android:minHeight="110dp"
     android:updatePeriodMillis="1800000"
-    android:initialLayout="@layout/widget_simple"
-    android:previewImage="@drawable/ic_launcher_foreground"
+    android:initialLayout="@layout/widget_today_schedule"
     android:resizeMode="horizontal|vertical"
-    android:widgetCategory="home_screen"
-    android:targetCellWidth="3"
-    android:targetCellHeight="2">
+    android:widgetCategory="home_screen">
 </appwidget-provider>

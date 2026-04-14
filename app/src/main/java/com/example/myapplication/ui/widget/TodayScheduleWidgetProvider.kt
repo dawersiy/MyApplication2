@@ -25,100 +25,99 @@ class TodayScheduleWidgetProvider : AppWidgetProvider() {
         }
     }
 
+    override fun onReceive(context: Context, intent: Intent) {
+        super.onReceive(context, intent)
+        if (intent.action == ACTION_REFRESH_SCHEDULE) {
+            val manager = AppWidgetManager.getInstance(context)
+            val component = ComponentName(context, TodayScheduleWidgetProvider::class.java)
+            onUpdate(context, manager, manager.getAppWidgetIds(component))
+        }
+    }
+
     private fun updateAppWidget(
         context: Context,
         appWidgetManager: AppWidgetManager,
         appWidgetId: Int
     ) {
-        val views = RemoteViews(context.packageName, R.layout.widget_simple)
+        val views = RemoteViews(context.packageName, R.layout.widget_today_schedule)
 
-        // 设置标题
         views.setTextViewText(R.id.widget_title, "今日日程")
+        views.setTextColor(R.id.widget_title, 0xFFFFFFFF.toInt()) // 白色
 
-        // 设置日期
-        val today = Calendar.getInstance()
-        val dateFormat = SimpleDateFormat("yyyy年MM月dd日", Locale.getDefault())
-        val todayStr = dateFormat.format(today.time)
-        views.setTextViewText(R.id.widget_date, todayStr)
-
-        // 获取今日任务
-        val tasks = getTodayTasks(context)
-
-        // 设置内容
-        if (tasks.isEmpty()) {
-            views.setTextViewText(R.id.widget_content, "暂无日程")
+        val todayTasks = getTodayScheduleTasks(context)
+        if (todayTasks.isEmpty()) {
+            views.setTextViewText(R.id.widget_content, "今日暂无日程喵")
         } else {
-            val taskText = tasks.joinToString("\n") { task ->
-                "• ${task.hour}:${task.minute.toString().padStart(2, '0')} ${task.title}"
+            val scheduleText = todayTasks.joinToString("\n") { task ->
+                buildString {
+                    append("${task.hour.toString().padStart(2, '0')}:${task.minute.toString().padStart(2, '0')} ")
+                    append("任务${task.title}喵:")
+                    if (task.deadline) append(" 🔴紧急喵")
+                    if (task.importance) append(" ⭐重要喵")
+                    if (task.tag.isNotEmpty()) append(" 【${task.tag}】")
+                }
             }
-            views.setTextViewText(R.id.widget_content, taskText)
+            views.setTextViewText(R.id.widget_content, scheduleText)
         }
+        views.setTextColor(R.id.widget_content, 0xFFFFFFFF.toInt()) // 白色desuwa
 
-        // 设置点击事件 - 打开主应用
+        views.setInt(R.id.widget_container, "setBackgroundColor", 0xFF000000.toInt()) //黑色喵
+
         val intent = Intent(context, MainActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
         }
         val pendingIntent = PendingIntent.getActivity(
-            context,
-            0,
-            intent,
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            context, 0, intent, PendingIntent.FLAG_IMMUTABLE
         )
         views.setOnClickPendingIntent(R.id.widget_container, pendingIntent)
 
         appWidgetManager.updateAppWidget(appWidgetId, views)
     }
 
-    private fun getTodayTasks(context: Context): List<Task> {
-        try {
-            val prefs = context.getSharedPreferences("tasks", Context.MODE_PRIVATE)
-            val today = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Calendar.getInstance().time)
-            val taskData = prefs.getString("tasks_$today", "")
-            return parseTasks(taskData)
-        } catch (e: Exception) {
-            e.printStackTrace()
-            return emptyList()
-        }
+    private fun getTodayScheduleTasks(context: Context): List<Task> {
+        val prefs = context.getSharedPreferences("tasks", Context.MODE_PRIVATE)
+        val todayFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+        val today = todayFormat.format(Calendar.getInstance().time)
+        val taskData = prefs.getString("tasks_$today", "")
+        return parseTaskData(taskData)
     }
 
-    private fun parseTasks(data: String?): List<Task> {
-        try {
-            if (data.isNullOrEmpty()) return emptyList()
-            
-            return data.split("|").mapNotNull { item ->
-                try {
-                    val parts = item.split(":")
-                    if (parts.size >= 4) {
-                        Task(
-                            id = parts[0],
-                            title = parts[1],
-                            hour = parts[2].toInt(),
-                            minute = parts[3].toInt(),
-                            tag = if (parts.size > 4) parts[4] else "",
-                            deadline = if (parts.size > 5) parts[5].toBoolean() else false,
-                            importance = if (parts.size > 6) parts[6].toBoolean() else false,
-                            reminderEnabled = if (parts.size > 7) parts[7].toBoolean() else false,
-                            reminderMinutes = if (parts.size > 8) parts[8].toInt() else 0,
-                            repeatType = if (parts.size > 9) parts[9] else "",
-                            priority = if (parts.size > 10) parsePriorityLevel(parts[10]) else PriorityLevel.LOW
-                        )
-                    } else null
-                } catch (e: Exception) {
-                    null
-                }
+    private fun parseTaskData(data: String?): List<Task> {
+        if (data.isNullOrEmpty()) return emptyList()
+        return try {
+            data.split("|").mapNotNull { item ->
+                val parts = item.split(":")
+                if (parts.size >= 11) {
+                    Task(
+                        id = parts[0],
+                        title = parts[1],
+                        hour = parts[2].toInt(),
+                        minute = parts[3].toInt(),
+                        tag = parts[4],
+                        deadline = parts[5].toBoolean(),
+                        importance = parts[6].toBoolean(),
+                        reminderEnabled = parts[7].toBoolean(),
+                        reminderMinutes = parts[8].toInt(),
+                        repeatType = parts[9],
+                        priority = parsePriority(parts[10])
+                    )
+                } else null
             }
         } catch (e: Exception) {
-            e.printStackTrace()
-            return emptyList()
+            emptyList()
         }
     }
 
-    private fun parsePriorityLevel(value: String): PriorityLevel {
+    private fun parsePriority(value: String): PriorityLevel {
         return when (value) {
             "HIGH" -> PriorityLevel.HIGH
             "MEDIUM" -> PriorityLevel.MEDIUM
             else -> PriorityLevel.LOW
         }
+    }
+
+    companion object {
+        const val ACTION_REFRESH_SCHEDULE = "com.example.myapplication.REFRESH_SCHEDULE_WIDGET"
     }
 }
 
@@ -136,9 +135,4 @@ data class Task(
     val priority: PriorityLevel
 )
 
-enum class PriorityLevel {
-    HIGH,
-    MEDIUM,
-    LOW
-}
-
+enum class PriorityLevel { HIGH, MEDIUM, LOW }  //现在应该没问题了.....喵

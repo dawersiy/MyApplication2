@@ -27,6 +27,10 @@ class TaskRepository(private val context: Context) {
             
             editor.putString("tasks_$date", newData)
             editor.commit()
+            
+            // 发送广播更新小组件
+            val intent = android.content.Intent("com.example.myapplication.REFRESH_SCHEDULE_WIDGET")
+            context.sendBroadcast(intent)
         } catch (e: Exception) {
             e.printStackTrace()
         }
@@ -69,6 +73,10 @@ class TaskRepository(private val context: Context) {
                 val editor = prefs.edit()
                 editor.putString("tasks_$date", newData)
                 editor.commit()
+                
+                // 发送广播更新小组件
+                val intent = android.content.Intent("com.example.myapplication.REFRESH_SCHEDULE_WIDGET")
+                context.sendBroadcast(intent)
             }
         } catch (e: Exception) {
             e.printStackTrace()
