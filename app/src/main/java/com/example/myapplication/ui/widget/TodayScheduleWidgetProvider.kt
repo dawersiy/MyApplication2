@@ -9,6 +9,8 @@ import android.content.Intent
 import android.widget.RemoteViews
 import com.example.myapplication.MainActivity
 import com.example.myapplication.R
+import com.example.myapplication.model.Task
+import com.example.myapplication.model.PriorityLevel
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Locale
@@ -120,19 +122,3 @@ class TodayScheduleWidgetProvider : AppWidgetProvider() {
         const val ACTION_REFRESH_SCHEDULE = "com.example.myapplication.REFRESH_SCHEDULE_WIDGET"
     }
 }
-
-data class Task(
-    val id: String,
-    val title: String,
-    val hour: Int,
-    val minute: Int,
-    val tag: String,
-    val deadline: Boolean,
-    val importance: Boolean,
-    val reminderEnabled: Boolean,
-    val reminderMinutes: Int,
-    val repeatType: String,
-    val priority: PriorityLevel
-)
-
-enum class PriorityLevel { HIGH, MEDIUM, LOW }  //现在应该没问题了.....喵

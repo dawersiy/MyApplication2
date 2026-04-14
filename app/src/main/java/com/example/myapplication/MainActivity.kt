@@ -68,6 +68,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
+import androidx.compose.runtime.collectAsState
 import com.example.myapplication.notification.NotificationHelper
 import com.example.myapplication.ui.theme.MyApplicationTheme
 import com.example.myapplication.viewmodel.CalendarViewModel
@@ -158,6 +159,11 @@ fun CalendarApp(viewModel: CalendarViewModel) {
     val textColor = if (isDarkMode.value) Color.White else MaterialTheme.colorScheme.onBackground
     val surfaceColor = if (isDarkMode.value) Color.DarkGray else Color(0xFFF5F5DC) // 淡米色
     val primaryColor = if (isDarkMode.value) Color.Blue else MaterialTheme.colorScheme.primary
+
+    // 观察任务数据
+    val tasks by viewModel.tasks.collectAsState(emptyList())
+
+
 
     // 加载任务
     LaunchedEffect(selectedDate.value) {
@@ -414,7 +420,7 @@ fun CalendarApp(viewModel: CalendarViewModel) {
                             isCurrentMonth = it.isCurrentMonth,
                             isSelected = viewModel.isDateEqual(it, selectedDate.value, calendar),
                             onClick = {
-                                selectedDate.value = calendar.time
+                                selectedDate.value = viewModel.getSelectedDate(it, calendar)
                             },
                             isDarkMode = isDarkMode.value
                         )
@@ -453,11 +459,12 @@ fun CalendarApp(viewModel: CalendarViewModel) {
                         contentColor = Color.White
                     )
                 ) {
-                    Text("编辑今日日程", color = textColor)
+                    val dateFormat = SimpleDateFormat("MM月dd日", Locale.getDefault())
+                    Text("编辑${dateFormat.format(selectedDate.value)}日程", color = textColor)
                 }
 
                 // 任务列表（按优先级排序）
-                val sortedTasks = viewModel.tasks.value.sortedBy {
+                val sortedTasks = tasks.sortedBy {
                     when (it.priority) {
                         PriorityLevel.HIGH -> 0
                         PriorityLevel.MEDIUM -> 1
@@ -681,7 +688,7 @@ fun CalendarApp(viewModel: CalendarViewModel) {
                         endOfWeek.set(Calendar.SECOND, 59)
 
                         // 计算本周任务统计
-                        val weekTasks = viewModel.tasks.value
+                        val weekTasks = tasks
                         viewModel.calculateStats(weekTasks)
                     },
                     colors = ButtonDefaults.buttonColors(
@@ -707,7 +714,7 @@ fun CalendarApp(viewModel: CalendarViewModel) {
                         endOfMonth.set(Calendar.SECOND, 59)
 
                         // 计算本月任务统计
-                        val monthTasks = viewModel.tasks.value
+                        val monthTasks = tasks
                         viewModel.calculateStats(monthTasks)
                     },
                     colors = ButtonDefaults.buttonColors(
@@ -724,14 +731,14 @@ fun CalendarApp(viewModel: CalendarViewModel) {
                         .fillMaxWidth()
                         .padding(16.dp)
                 ) {
-                    if (viewModel.scheduleStats.value.isEmpty()) {
+                    if ((viewModel.scheduleStats.value ?: emptyList()).isEmpty()) {
                         Text(
                             text = "暂无统计数据",
                             style = MaterialTheme.typography.bodyMedium,
                             color = textColor
                         )
                     } else {
-                        viewModel.scheduleStats.value.forEach { stats ->
+                        (viewModel.scheduleStats.value ?: emptyList()).forEach { stats ->
                             Text(
                                 text = "${stats.tag}: ${stats.count} 次",
                                 style = MaterialTheme.typography.bodyMedium,
@@ -741,7 +748,7 @@ fun CalendarApp(viewModel: CalendarViewModel) {
                         }
 
                         // 根据次数最多的活动类型给出评价
-                        val maxStats = viewModel.scheduleStats.value.maxByOrNull { it.count }
+                        val maxStats = (viewModel.scheduleStats.value ?: emptyList()).maxByOrNull { it.count }
                         maxStats?.let {
                             val evaluation = when (it.tag) {
                                 "摸鱼" -> "乐队贝斯手"
@@ -937,7 +944,7 @@ fun CalendarApp(viewModel: CalendarViewModel) {
                             horizontalArrangement = Arrangement.SpaceEvenly
                         ) {
                             Button(onClick = {
-                                val weekTasks = viewModel.tasks.value
+                                val weekTasks = tasks
                                 viewModel.calculateStats(weekTasks)
                             },
                             colors = ButtonDefaults.buttonColors(
@@ -948,7 +955,7 @@ fun CalendarApp(viewModel: CalendarViewModel) {
                             }
 
                             Button(onClick = {
-                                val monthTasks = viewModel.tasks.value
+                                val monthTasks = tasks
                                 viewModel.calculateStats(monthTasks)
                             },
                             colors = ButtonDefaults.buttonColors(
@@ -965,14 +972,14 @@ fun CalendarApp(viewModel: CalendarViewModel) {
                                 .fillMaxWidth()
                                 .padding(8.dp)
                         ) {
-                            if (viewModel.scheduleStats.value.isEmpty()) {
+                            if ((viewModel.scheduleStats.value ?: emptyList()).isEmpty()) {
                                 Text(
                                     text = "暂无统计数据",
                                     style = MaterialTheme.typography.bodyMedium,
                                     color = textColor
                                 )
                             } else {
-                                viewModel.scheduleStats.value.forEach { stats ->
+                                (viewModel.scheduleStats.value ?: emptyList()).forEach { stats ->
                                     Text(
                                         text = "${stats.tag}: ${stats.count} 次",
                                         style = MaterialTheme.typography.bodyMedium,
@@ -982,7 +989,7 @@ fun CalendarApp(viewModel: CalendarViewModel) {
                                 }
 
                                 // 根据次数最多的活动类型给出评价
-                                val maxStats = viewModel.scheduleStats.value.maxByOrNull { it.count }
+                                val maxStats = (viewModel.scheduleStats.value ?: emptyList()).maxByOrNull { it.count }
                                 maxStats?.let {
                                     val evaluation = when (it.tag) {
                                         "摸鱼" -> "乐队贝斯手"

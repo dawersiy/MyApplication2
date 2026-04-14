@@ -35,12 +35,13 @@ class CalendarViewModel(private val taskRepository: TaskRepository) : ViewModel(
         _tasks.value = taskRepository.getTasksByDate(date)
     }
 
-    // 删除任务
     fun deleteTask(taskId: String, date: String) {
-        // 同步删除任务
-        taskRepository.deleteTask(taskId, date)
-        // 同步加载任务
-        _tasks.value = taskRepository.getTasksByDate(date)
+        viewModelScope.launch {
+            // 删除任务
+            taskRepository.deleteTask(taskId, date)
+            // 重新加载并刷新 UI
+            _tasks.value = taskRepository.getTasksByDate(date)
+        }
     }
 
     // 计算统计数据
@@ -216,5 +217,22 @@ class CalendarViewModel(private val taskRepository: TaskRepository) : ViewModel(
         val checkDate = checkCalendar.time
         val sdf = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.getDefault())
         return sdf.format(checkDate) == sdf.format(date)
+    }
+
+    // 获取点击的日期
+    fun getSelectedDate(day: CalendarDay, calendar: Calendar): java.util.Date {
+        val checkCalendar = calendar.clone() as Calendar
+        if (day.isCurrentMonth) {
+            checkCalendar.set(Calendar.DAY_OF_MONTH, day.day)
+        } else if (day.day > 15) {
+            // 上个月
+            checkCalendar.add(Calendar.MONTH, -1)
+            checkCalendar.set(Calendar.DAY_OF_MONTH, day.day)
+        } else {
+            // 下个月
+            checkCalendar.add(Calendar.MONTH, 1)
+            checkCalendar.set(Calendar.DAY_OF_MONTH, day.day)
+        }
+        return checkCalendar.time
     }
 }
